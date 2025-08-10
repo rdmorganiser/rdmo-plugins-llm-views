@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdmo xmlns:dc="http://purl.org/dc/elements/1.1/" created="2025-08-10T16:31:04.289438+02:00" required="2.1.0" version="2.3.2">
+	<view dc:uri="https://rdmorganiser.github.io/terms/views/llm">
+		<uri_prefix>https://rdmorganiser.github.io/terms</uri_prefix>
+		<uri_path>llm</uri_path>
+		<dc:comment/>
+		<order>0</order>
+		<title lang="en">LLM</title>
+		<help lang="en">This view uses an LLM to generate a data management plan.</help>
+		<title lang="de">LLM</title>
+		<help lang="de">Diese Ansicht nutzt ein LLM um einen Datenmanagementplan zu erzeugen.</help>
+		<catalogs/>
+		<template>{% load view_tags %}
+{% load llm_tags %}
+
+{% llm prompt=&quot;Create a DMP using the template and the project.&quot; %}
+Data Management Plan (DMP)
+
+Paragraph 1: Introduction and Objectives
+
+1.1 Background: This Data Management Plan (DMP) outlines the strategies for managing, preserving, and sharing data generated during the research project entitled [Project Title]. The DMP aims to ensure compliance with data management policies, maintain transparency and reproducibility, as well as facilitate collaboration among researchers and long-term access to the data by the scientific community.
+
+1.2 Objectives: The primary objectives of this DMP are:
+   a) To establish procedures for organizing, storing, backing up, and securing research data during all stages of the project lifecycle.
+   b) To ensure that the data is accessible, reusable, and discoverable by researchers both within and outside the project team.
+   c) To meet the requirements for data management, sharing, and preservation as specified by funding agencies, journals, and institutions involved in the project.
+{% endllm %}</template>
+	</view>
+</rdmo>
