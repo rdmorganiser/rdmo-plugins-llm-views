@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools", "wheel"]
 
 [project]
-name = "rdmo-plugins-llm-tags"
+name = "rdmo-plugins-llm-views"
 description = ""
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -44,10 +44,10 @@ dev = [
 ]
 
 [project.urls]
-repository = "https://github.com/rdmorganiser/rdmo-plugins-llm-tags.git"
+repository = "https://github.com/rdmorganiser/rdmo-plugins-llm-views.git"
 
 [tool.setuptools.packages.find]
-include = ["rdmo_llm_tags*"]
+include = ["rdmo_llm_views*"]
 exclude = ["*assets*", "*tests*"]
 
 [tool.setuptools.package-data]

@@ -17,14 +17,14 @@ class LLMTemplateNode(Node):
         template = self.nodelist.render(context)
         resolved = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
-        prompt = resolved.get('prompt')
-        project_wrapper = context.get('project')
+        prompt = resolved.get("prompt")
+        project_wrapper = context.get("project")
 
         if project_wrapper:
             project = get_project(project_wrapper._project)
             return adapter.on_tag_render(prompt, template, project)
         else:
-            return ''
+            return ""
 
 
 @register.tag(name="llm")
@@ -33,10 +33,10 @@ def llm_template(parser, token):
 
     kwargs = {}
     for tag_arg in tag_args:
-        if '=' in tag_arg:
+        if "=" in tag_arg:
             key, value = tag_arg.split("=", 1)
             kwargs[key] = parser.compile_filter(value)
 
-    nodelist = parser.parse(('endllm',))
+    nodelist = parser.parse(("endllm",))
     parser.delete_first_token()
     return LLMTemplateNode(nodelist, kwargs)
