@@ -15,30 +15,35 @@ git clone git@github.com:rdmorganiser/rdmo-plugins-llm-views
 pip install -e rdmo-plugins-llm-views
 ```
 
-Add the following settings to your `config/settings/local.py`:
+Add the following settings to your `config/settings/local.py` (and adjust them as required):
 
 ```python
 INSTALLED_APPS = ['rdmo_llm_views', *INSTALLED_APPS]
 
 LLM_TAGS_ADAPTER = 'rdmo_llm_views.adapter.langchain.LangChainAdapter'
 LLM_TAGS_LANGCHAIN_SYSTEM_PROMPT = '''
-    You are a helpful assistant that writes data management plans.
-    You will always produce markdown output.
+You are a knowledgeable assistant specializing in writing data management plans (DMPs).
+
+- Always produce output in Markdown format.
+- Use headings, bullet points, where appropriate.
+- Do not use tables.
+- Do not use ```.
+- Keep your response concise, not exceeding one page.
+- Maintain a professional, clear, and concise writing style.
 '''
 LLM_TAGS_LANGCHAIN_USER_PROMPT = '''
-    Project data:
-    ```json
-    {project}
-    ```
+Project data (JSON): {project}
 
-    Template: {template}
+Template: {template}
 
-    Prompt: {prompt}
+Prompt: {prompt}
 
-    Please produce the requested output.
+Instructions:
+- Fill the template with the project data.
+- Take the prompt into account.
 '''
 LLM_TAGS_LANGCHAIN_LLM_SETTINGS = {
     "openai_api_key": OPENAI_API_KEY,
-    "model": 'gpt-3.5-turbo'
+    "model": 'gpt-4o-mini'
 }
 ```
