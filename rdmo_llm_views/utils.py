@@ -5,7 +5,7 @@ from rdmo.projects.exports import AnswersExportMixin
 
 
 def get_adapter():
-    return import_class(settings.LLM_TAGS_ADAPTER)()
+    return import_class(settings.LLM_VIEWS_ADAPTER)()
 
 
 def get_project(project):

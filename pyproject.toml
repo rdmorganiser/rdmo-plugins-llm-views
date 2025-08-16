@@ -36,6 +36,9 @@ dependencies = [
 openai = [
   "langchain-openai",
 ]
+ollama = [
+  "langchain-ollama",
+]
 dev = [
     "build",
     "pre-commit",
