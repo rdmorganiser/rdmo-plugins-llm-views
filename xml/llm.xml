@@ -8,7 +8,7 @@
 		<title lang="en">LLM</title>
 		<help lang="en">This view uses an LLM to generate a data management plan.</help>
 		<title lang="de">LLM</title>
-		<help lang="de">Diese Ansicht nutzt ein LLM um einen Datenmanagementplan zu erzeugen.</help>
+		<help lang="de">Diese Ansicht nutzt in LLM um einen Datenmanagementplan zu erzeugen.</help>
 		<catalogs/>
 		<template>{% load view_tags %}
 {% load llm_tags %}
