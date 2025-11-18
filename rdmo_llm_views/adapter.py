@@ -1,14 +1,22 @@
 from django.conf import settings
 
-from langchain.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
 
 from rdmo.core.utils import markdown2html
 
-from . import BaseAdapter
+
+class BaseAdapter:
+
+    def __init__(self, cl, settings):
+        raise NotImplementedError
+
+    def on_tag_render(self, prompt, template, context):
+        raise NotImplementedError
 
 
 class LangChainAdapter(BaseAdapter):
+
     def __init__(self):
         self.prompt = ChatPromptTemplate.from_messages(
             [
@@ -21,9 +29,9 @@ class LangChainAdapter(BaseAdapter):
 
         self.chain = self.prompt | self.llm | self.parser
 
-    def on_tag_render(self, prompt, template, project):
+    def on_tag_render(self, prompt, template, context):
         result = self.chain.invoke({
-            "project": project,
+            "context": context,
             "template": template,
             "prompt": prompt
         })

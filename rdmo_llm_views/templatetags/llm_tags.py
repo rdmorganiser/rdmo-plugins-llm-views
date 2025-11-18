@@ -1,7 +1,7 @@
 from django import template
 from django.template import Node
 
-from ..utils import get_adapter, get_project
+from ..utils import get_adapter, get_context
 
 register = template.Library()
 
@@ -18,18 +18,20 @@ class LLMTemplateNode(Node):
         resolved = {k: v.resolve(context) for k, v in self.kwargs.items()}
 
         prompt = resolved.get("prompt")
+        attributes = resolved["attributes"].split(",") if resolved.get("attributes") else None
+
         project_wrapper = context.get("project")
 
         if project_wrapper:
-            project = get_project(project_wrapper._project)
-            return adapter.on_tag_render(prompt, template, project)
+            context = get_context(project_wrapper, attributes)
+            return adapter.on_tag_render(prompt, template, context)
         else:
             return ""
 
 
 @register.tag(name="llm")
 def llm_template(parser, token):
-    tag_name, *tag_args = token.split_contents()
+    _, *tag_args = token.split_contents()
 
     kwargs = {}
     for tag_arg in tag_args:

@@ -47,7 +47,7 @@ Instructions:
 For `openai` use:
 
 ```python
-LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.langchain.OpenAILangChainAdapter'
+LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OpenAILangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
     "openai_api_key": OPENAI_API_KEY,
     "model": 'gpt-4o-mini'
@@ -57,8 +57,57 @@ LLM_VIEWS_LLM_ARGS = {
 For `ollama` use:
 
 ```python
-LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.langchain.OllamaLangChainAdapter'
+LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OllamaLangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
     "model": "gemma3:1b"
 }
+```
+
+Usage
+-----
+
+The `{% llm %}` tag can be used in two ways.
+
+```django
+{% load view_tags %}
+{% load llm_tags %}
+
+{% llm %}
+## 1. Data Summary
+
+### Purpose of data collection
+
+...
+
+{% endllm %}
+```
+
+An additional prompt can be provided, e.g.:
+
+```django
+{% load view_tags %}
+{% load llm_tags %}
+
+{% llm prompt="Write in the style the lord of the rings. Use only h2 and h3." %}
+## 1. Data Summary
+
+### Purpose of data collection
+
+...
+
+{% endllm %}
+```
+
+For a more fine grained control, the attributes can be selected. The model is then provided only with the questions and
+answers for this attribute.
+
+```django
+{% load view_tags %}
+{% load llm_tags %}
+
+{% llm attributes='project/research_question/title,project/research_question/keywords'  %}
+The title of the project is ... Keywords are ...
+{% endllm %}
+
+...
 ```

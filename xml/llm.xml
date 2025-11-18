@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rdmo xmlns:dc="http://purl.org/dc/elements/1.1/" created="2025-08-10T16:31:04.289438+02:00" required="2.1.0" version="2.3.2">
+<rdmo xmlns:dc="http://purl.org/dc/elements/1.1/" created="2025-11-18T12:15:35.129567+01:00" required="2.1.0" version="2.4.0">
 	<view dc:uri="https://rdmorganiser.github.io/terms/views/llm">
 		<uri_prefix>https://rdmorganiser.github.io/terms</uri_prefix>
 		<uri_path>llm</uri_path>
@@ -13,17 +13,79 @@
 		<template>{% load view_tags %}
 {% load llm_tags %}
 
-{% llm prompt=&quot;Create a DMP using the template and the project.&quot; %}
-Data Management Plan (DMP)
+&lt;h1&gt;LLM View&lt;/h1&gt;
 
-Paragraph 1: Introduction and Objectives
+{% llm prompt="Use only h2 and h3." %}
+## 1. Data Summary
 
-1.1 Background: This Data Management Plan (DMP) outlines the strategies for managing, preserving, and sharing data generated during the research project entitled [Project Title]. The DMP aims to ensure compliance with data management policies, maintain transparency and reproducibility, as well as facilitate collaboration among researchers and long-term access to the data by the scientific community.
+### Purpose of data collection
 
-1.2 Objectives: The primary objectives of this DMP are:
-   a) To establish procedures for organizing, storing, backing up, and securing research data during all stages of the project lifecycle.
-   b) To ensure that the data is accessible, reusable, and discoverable by researchers both within and outside the project team.
-   c) To meet the requirements for data management, sharing, and preservation as specified by funding agencies, journals, and institutions involved in the project.
+### Type and format of data
+
+### Estimated volume
+
+### Data origin
+
+## 2. Standards and Metadata
+
+### Metadata standards
+
+### Documentation practices
+
+### File naming and versioning conventions
+
+## 3. Data Storage and Backup
+
+### Active storage environment
+
+### Backup strategy
+
+### Security measures
+
+## 4. Ethical, Legal, and Security Considerations
+
+### Data sensitivity
+
+### Informed consent and anonymization
+
+### Compliance
+
+## 5. Data Sharing and Access
+
+### Sharing strategy
+
+### Repositories
+
+### Licensing
+
+### Access control
+
+## 6. Responsibilities and Resources
+
+### Roles and responsibilities
+
+### Expertise and training
+
+### Budget
+
+## 7. Data Preservation and Long-Term Archiving
+
+### What will be preserved
+
+### Duration
+
+### Archiving solution
+
+### Format sustainability
+
+## 8. Quality Assurance
+
+### Data quality checks
+
+### Workflow transparency
+
+### Change tracking
+
 {% endllm %}</template>
 	</view>
 </rdmo>
