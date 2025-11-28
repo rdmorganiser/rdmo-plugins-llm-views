@@ -29,7 +29,7 @@ class LangChainAdapter(BaseAdapter):
 
         self.chain = self.prompt | self.llm | self.parser
 
-    def on_tag_render(self, prompt, template, context):
+    def on_render_tag(self, prompt, template, context):
         result = self.chain.invoke({
             "context": context,
             "template": template,

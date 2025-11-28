@@ -21,7 +21,7 @@ Add the following settings to your `config/settings/local.py` (and adjust them a
 ```python
 INSTALLED_APPS = ['rdmo_llm_views', *INSTALLED_APPS]
 
-LLM_VIEWS_LANGCHAIN_SYSTEM_PROMPT = '''
+LLM_VIEWS_SYSTEM_PROMPT = '''
 You are a knowledgeable assistant specializing in writing data management plans (DMPs).
 
 - Always produce output in Markdown format.
@@ -31,7 +31,7 @@ You are a knowledgeable assistant specializing in writing data management plans 
 - Keep your response concise, not exceeding one page.
 - Maintain a professional, clear, and concise writing style.
 '''
-LLM_VIEWS_LANGCHAIN_USER_PROMPT = '''
+LLM_VIEWS_USER_PROMPT = '''
 Project data (JSON): {project}
 
 Template: {template}
@@ -42,6 +42,9 @@ Instructions:
 - Fill the template with the project data.
 - Take the prompt into account.
 '''
+
+LLM_VIEWS_PLACEHOLDER = "🤔"
+LLM_VIEWS_TIMEOUT = 1000
 ```
 
 For `openai` use:
@@ -63,8 +66,38 @@ LLM_VIEWS_LLM_ARGS = {
 }
 ```
 
+In order to use [django-q](https://django-q.readthedocs.io) to perform the call to the LLM asynchronous, the following
+settings need to be added:
+
+```python
+Q_CLUSTER = {
+    'name': 'DjangORM',
+    'workers': 4,
+    'timeout': 90,
+    'retry': 120,
+    'queue_limit': 50,
+    'bulk': 10,
+    'orm': 'default'
+}
+```
+
+
 Usage
 -----
+
+### Development
+
+The djqngo-q worker needs to be started in parallel to the usual `runserver` command:
+
+```bash
+python manage.py qcluster
+```
+
+### Production
+
+*todo*
+
+### Views
 
 The `{% llm %}` tag can be used in two ways.
 

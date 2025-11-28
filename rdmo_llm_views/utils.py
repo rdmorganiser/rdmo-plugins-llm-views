@@ -1,3 +1,5 @@
+import hashlib
+import json
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -8,6 +10,11 @@ from rdmo.projects.exports import AnswersExportMixin
 
 def get_adapter():
     return import_class(settings.LLM_VIEWS_ADAPTER)()
+
+
+def get_hash(*args):
+    raw = json.dumps(args)
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
 def get_context(project_wrapper, attributes):

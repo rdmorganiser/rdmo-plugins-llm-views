@@ -1,7 +1,11 @@
 from django import template
+from django.conf import settings
 from django.template import Node
 
-from ..utils import get_adapter, get_context
+from django_q.models import Task
+from django_q.tasks import async_task
+
+from ..utils import get_adapter, get_context, get_hash
 
 register = template.Library()
 
@@ -24,9 +28,19 @@ class LLMTemplateNode(Node):
 
         if project_wrapper:
             context = get_context(project_wrapper, attributes)
-            return adapter.on_tag_render(prompt, template, context)
-        else:
-            return ""
+            task_name = f'project="{project_wrapper.title}" hash={get_hash(prompt, template, context)}'
+
+            task = Task.objects.filter(name=task_name).first()
+            if task:
+                return task.result
+            else:
+                async_task("rdmo_llm_views.tasks.render_tag", prompt, template, context, task_name=task_name)
+                return (
+                    settings.LLM_VIEWS_PLACEHOLDER +
+                    f"<script>setTimeout(() => location.reload(), {settings.LLM_VIEWS_TIMEOUT});</script>"
+                )
+
+        return ""
 
 
 @register.tag(name="llm")
