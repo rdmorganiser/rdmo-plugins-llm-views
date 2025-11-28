@@ -12,6 +12,10 @@ def get_adapter():
     return import_class(settings.LLM_VIEWS_ADAPTER)()
 
 
+def get_group(project_id, snapshot_id, view_id):
+    return f"{project_id}:{snapshot_id}:{view_id}"
+
+
 def get_hash(*args):
     raw = json.dumps(args)
     return hashlib.sha256(raw.encode()).hexdigest()

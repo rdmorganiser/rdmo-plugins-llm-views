@@ -1,11 +1,12 @@
 from django import template
 from django.conf import settings
 from django.template import Node
+from django.utils.safestring import mark_safe
 
-from django_q.models import Task
+from django_q.models import OrmQ, Task
 from django_q.tasks import async_task
 
-from ..utils import get_adapter, get_context, get_hash
+from ..utils import get_adapter, get_context, get_group, get_hash
 
 register = template.Library()
 
@@ -24,27 +25,39 @@ class LLMTemplateNode(Node):
         prompt = resolved.get("prompt")
         attributes = resolved["attributes"].split(",") if resolved.get("attributes") else None
 
-        project_wrapper = context.get("project")
+        project = context.get("project")
+        view = context.get("view")
 
-        if project_wrapper:
-            context = get_context(project_wrapper, attributes)
-            task_name = f'project="{project_wrapper.title}" hash={get_hash(prompt, template, context)}'
+        if project:
+            context = get_context(project, attributes)
+
+            project_id = project.id
+            snapshot_id = project.snapshot["id"] if project.snapshot else None
+            view_id = view["id"]
+
+            task_group = get_group(project_id, snapshot_id, view_id)
+            task_name = get_hash(project_id, snapshot_id, view_id, prompt, template, context)
 
             task = Task.objects.filter(name=task_name).first()
             if task:
                 return task.result
             else:
-                async_task("rdmo_llm_views.tasks.render_tag", prompt, template, context, task_name=task_name)
+                # check if there is a queued task with that name
+                if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
+                    async_task(
+                        "rdmo_llm_views.tasks.render_tag", prompt, template, context,
+                        task_name=task_name, group=task_group
+                    )
                 return (
                     settings.LLM_VIEWS_PLACEHOLDER +
                     f"<script>setTimeout(() => location.reload(), {settings.LLM_VIEWS_TIMEOUT});</script>"
                 )
+        else:
+            return ""
 
-        return ""
 
-
-@register.tag(name="llm")
-def llm_template(parser, token):
+@register.tag()
+def llm(parser, token):
     _, *tag_args = token.split_contents()
 
     kwargs = {}
@@ -56,3 +69,41 @@ def llm_template(parser, token):
     nodelist = parser.parse(("endllm",))
     parser.delete_first_token()
     return LLMTemplateNode(nodelist, kwargs)
+
+
+@register.simple_tag(takes_context=True)
+def llm_reset(context):
+    project = context.get("project")
+    view = context.get("view")
+
+    if project:
+        project_id = project.id
+        snapshot_id = project.snapshot["id"] if project.snapshot else None
+        view_id = view["id"]
+
+        return mark_safe(rf"""
+            <button id="reset-llm-view" class="btn btn-link">🔄</button>
+            <script>
+                const button = document.getElementById('reset-llm-view')
+                const handleClick = () => {{
+                    const baseUrl = document.querySelector('meta[name="baseurl"]').content.replace(/\/+$/, '')
+                    const url = `${{baseUrl}}/api/v1/llm-views/projects/{project_id}/reset/`
+
+                    fetch(url, {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': Cookies.get('csrftoken')
+                        }},
+                        body: JSON.stringify({{
+                            snapshot: {snapshot_id or 'null'},
+                            view: {view_id}
+                        }})
+                    }}).then(() => location.reload())
+                }}
+
+                button.addEventListener('click', handleClick);
+            </script>
+        """)
+    else:
+        return ""
