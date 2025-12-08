@@ -95,7 +95,37 @@ python manage.py qcluster
 
 ### Production
 
-*todo*
+Create a Systed service file in `/etc/systemd/system/rdmo-qcluster.service`:
+
+```
+[Unit]
+Description=RDMO qcluster runner
+After=network.target
+
+[Service]
+User=rdmo
+Group=rdmo
+
+LogsDirectory=django-q
+
+WorkingDirectory=/srv/rdmo/rdmo-app/
+
+ExecStart=/srv/rdmo/rdmo-app/env/bin/python manage.py qcluster
+
+StandardOutput=append:/var/log/django-q/stdout.log
+StandardError=append:/var/log/django-q/stderr.log
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload and enable the service:
+
+```bash
+sys0temctl daemon-reload
+systemctl enable --now rdmo-qcluster
+```
+
 
 ### Views
 
