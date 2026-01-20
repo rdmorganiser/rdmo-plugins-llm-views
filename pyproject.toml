@@ -29,7 +29,7 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "django-q",
+  "django-q2",
   "langchain",
 ]
 
@@ -82,9 +82,6 @@ select = [
   "Q"     # flake8-quotes
 ]
 ignore = [
-  "B006",   # mutable-argument-default
-  "B007",   # unused-loop-control-variable
-  "B018",   # useless-expression
   "RUF012", # mutable-class-default
 ]
 
