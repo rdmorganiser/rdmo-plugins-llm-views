@@ -1,74 +1,113 @@
 from django import template
-from django.conf import settings
 from django.template import Node
-from django.utils.safestring import mark_safe
 
-from django_q.models import OrmQ, Task
-from django_q.tasks import async_task
-
-from ..utils import get_adapter, get_context, get_group, get_hash
+from ..utils import get_adapter, get_context, get_group, get_hash, render_reset_button, render_tag_async
 
 register = template.Library()
 
 adapter = get_adapter()
 
 
-class LLMTemplateNode(Node):
+class LLMNode(Node):
+
     def __init__(self, nodelist, kwargs):
         self.nodelist = nodelist
         self.kwargs = kwargs
 
+    def render_content(self, context):
+        return self.nodelist.render(context)
+
+    def resolve_kwargs(self, context):
+        return {k: v.resolve(context) for k, v in self.kwargs.items()}
+
+    @classmethod
+    def from_tag(cls, parser, token):
+        tag_name = token.contents.split()[0]
+
+        _, *tag_args = token.split_contents()
+
+        kwargs = {}
+        for tag_arg in tag_args:
+            if "=" in tag_arg:
+                key, value = tag_arg.split("=", 1)
+                kwargs[key] = parser.compile_filter(value)
+
+        nodelist = parser.parse((f"end_{tag_name}",))
+        parser.delete_first_token()
+        return cls(nodelist, kwargs)
+
+
+class LLMTemplateNode(LLMNode):
+
     def render(self, context):
-        template = self.nodelist.render(context)
-        resolved = {k: v.resolve(context) for k, v in self.kwargs.items()}
-
-        prompt = resolved.get("prompt")
-        attributes = resolved["attributes"].split(",") if resolved.get("attributes") else None
-
         project = context.get("project")
         view = context.get("view")
 
         if project:
+            template = self.render_content(context)
+            kwargs = self.resolve_kwargs(context)
+
+            prompt = kwargs.get("prompt")
+            attributes = kwargs.get("attributes").split(",") if kwargs.get("attributes") else None
+
             context = get_context(project, attributes)
 
             project_id = project.id
             snapshot_id = project.snapshot["id"] if project.snapshot else None
             view_id = view["id"]
 
-            task_group = get_group(project_id, snapshot_id, view_id)
-            task_name = get_hash(project_id, snapshot_id, view_id, prompt, template, context)
+            task = "rdmo_llm_views.tasks.render_template"
+            task_kwargs = {
+                "context": context,
+                "template": template,
+                "prompt": prompt
+            }
 
-            task = Task.objects.filter(name=task_name).first()
-            if task:
-                return task.result
-            else:
-                # check if there is a queued task with that name
-                if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
-                    async_task(
-                        "rdmo_llm_views.tasks.render_tag", prompt, template, context,
-                        task_name=task_name, group=task_group
-                    )
-                return (
-                    settings.LLM_VIEWS_PLACEHOLDER +
-                    f"<script>setTimeout(() => location.reload(), {settings.LLM_VIEWS_TIMEOUT});</script>"
-                )
-        else:
-            return ""
+            task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
+            task_group = get_group(project_id, snapshot_id, view_id)
+
+            return render_tag_async(task, task_name, task_group, **task_kwargs)
+
+        return ""
+
+
+class LLMPromptNode(LLMNode):
+
+    def render(self, context):
+        project = context.get("project")
+        view = context.get("view")
+
+        if project:
+            user_prompt = self.render_content(context)
+
+            project = context.get("project")
+            view = context.get("view")
+
+            project_id = project.id
+            snapshot_id = project.snapshot["id"] if project.snapshot else None
+            view_id = view["id"]
+
+            task = "rdmo_llm_views.tasks.render_prompt"
+            task_kwargs = {
+                "user_prompt": user_prompt
+            }
+
+            task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
+            task_group = get_group(project_id, snapshot_id, view_id)
+
+            return render_tag_async(task, task_name, task_group, **task_kwargs)
+
+        return ""
 
 
 @register.tag()
-def llm(parser, token):
-    _, *tag_args = token.split_contents()
+def llm_template(parser, token):
+    return LLMTemplateNode.from_tag(parser, token)
 
-    kwargs = {}
-    for tag_arg in tag_args:
-        if "=" in tag_arg:
-            key, value = tag_arg.split("=", 1)
-            kwargs[key] = parser.compile_filter(value)
 
-    nodelist = parser.parse(("endllm",))
-    parser.delete_first_token()
-    return LLMTemplateNode(nodelist, kwargs)
+@register.tag()
+def llm_prompt(parser, token):
+    return LLMPromptNode.from_tag(parser, token)
 
 
 @register.simple_tag(takes_context=True)
@@ -81,29 +120,6 @@ def llm_reset(context):
         snapshot_id = project.snapshot["id"] if project.snapshot else None
         view_id = view["id"]
 
-        return mark_safe(rf"""
-            <button id="reset-llm-view" class="btn btn-link">🔄</button>
-            <script>
-                const button = document.getElementById('reset-llm-view')
-                const handleClick = () => {{
-                    const baseUrl = document.querySelector('meta[name="baseurl"]').content.replace(/\/+$/, '')
-                    const url = `${{baseUrl}}/api/v1/llm-views/projects/{project_id}/reset/`
+        return render_reset_button(project_id, snapshot_id, view_id)
 
-                    fetch(url, {{
-                        method: 'POST',
-                        headers: {{
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': Cookies.get('csrftoken')
-                        }},
-                        body: JSON.stringify({{
-                            snapshot: {snapshot_id or 'null'},
-                            view: {view_id}
-                        }})
-                    }}).then(() => location.reload())
-                }}
-
-                button.addEventListener('click', handleClick);
-            </script>
-        """)
-    else:
-        return ""
+    return ""

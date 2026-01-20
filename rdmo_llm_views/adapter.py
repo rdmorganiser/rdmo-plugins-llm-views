@@ -8,39 +8,53 @@ from rdmo.core.utils import markdown2html
 
 class BaseAdapter:
 
-    def __init__(self, cl, settings):
+    def on_render_template(self, prompt, template, context):
         raise NotImplementedError
 
-    def on_tag_render(self, prompt, template, context):
+    def on_render_prompt(self, prompt):
         raise NotImplementedError
 
 
 class LangChainAdapter(BaseAdapter):
 
-    def __init__(self):
-        self.prompt = ChatPromptTemplate.from_messages(
+    def on_render_template(self, prompt, template, context):
+        prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", settings.LLM_VIEWS_SYSTEM_PROMPT),
                 ("user", settings.LLM_VIEWS_USER_PROMPT)
             ]
         )
 
-        self.parser = StrOutputParser()
+        chain = prompt | self.llm | self.parser
 
-        self.chain = self.prompt | self.llm | self.parser
-
-    def on_render_tag(self, prompt, template, context):
-        result = self.chain.invoke({
-            "context": context,
+        result = chain.invoke({
+            "prompt": prompt,
             "template": template,
-            "prompt": prompt
+            "context": context
         })
+
+        return markdown2html(result)
+
+    def on_render_prompt(self, user_prompt):
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("user", user_prompt)
+            ]
+        )
+
+        chain = prompt | self.llm | self.parser
+
+        result = chain.invoke({})
 
         return markdown2html(result)
 
     @property
     def llm(self):
         raise NotImplementedError
+
+    @property
+    def parser(self):
+        return StrOutputParser()
 
 
 class OpenAILangChainAdapter(LangChainAdapter):
