@@ -1,6 +1,8 @@
 from django import template
 from django.template import Node
 
+from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
+
 from ..utils import get_adapter, get_context, get_group, get_hash, render_reset_button, render_tag_async
 
 register = template.Library()
@@ -126,3 +128,38 @@ def llm_reset(context):
         return render_reset_button(project_id, snapshot_id, view_id)
 
     return ""
+
+
+@register.simple_tag(takes_context=True)
+def format_value(context, attribute, set_prefix="", set_index=0, index=0, project=None):
+    value = get_value(context, attribute, set_prefix=set_prefix, set_index=set_index,
+                                 index=index, project=project)
+    return format_string(value.get("value_and_unit", ""))
+
+
+@register.simple_tag(takes_context=True)
+def format_value_list(context, attribute, set_prefix="", set_index=0, project=None):
+    values = get_values(context, attribute, set_prefix=set_prefix, set_index=set_index, project=project)
+    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+
+
+@register.simple_tag(takes_context=True)
+def format_value_inline_list(context, attribute, set_prefix="", set_index=0, project=None):
+    values = get_values(context, attribute, set_prefix=set_prefix, set_index=set_index, project=project)
+    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+
+
+@register.simple_tag(takes_context=True)
+def format_set_value(context, set, attribute, set_prefix="", index=0, project=None):
+    value = get_set_value(context, set, attribute, set_prefix=set_prefix, index=index, project=project)
+    return format_string(value.get("value_and_unit", ""))
+
+
+@register.simple_tag(takes_context=True)
+def format_set_value_list(context, set, attribute, set_prefix="", project=None):
+    values = get_set_values(context, set, attribute, set_prefix=set_prefix, project=project)
+    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+
+
+def format_string(string):
+    return string.strip().replace("\n", " ").replace("\t", " ")
