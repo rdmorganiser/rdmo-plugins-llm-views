@@ -17,14 +17,14 @@
 
 &lt;h2&gt;Project information&lt;/h2&gt;
 
-{% llm attributes='project/research_question/title,project/research_question/keywords'  %}
+{% llm_template attributes='project/research_question/title,project/research_question/keywords'  %}
 The title of the project is ... Keywords are ...
-{% endllm %}
+{% end_llm_template %}
 
 &lt;h2&gt;Long-term storage&lt;/h2&gt;
 
-{% llm attributes='project/preservation/selection_criteria,project/preservation/responsible_person/name'  %}
+{% llm_template attributes='project/preservation/selection_criteria,project/preservation/responsible_person/name'  %}
 Data is selected according to ... Responsible are ...
-{% endllm %}</template>
+{% end_llm_template %}</template>
 	</view>
 </rdmo>

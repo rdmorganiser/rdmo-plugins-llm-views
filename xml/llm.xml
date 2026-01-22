@@ -15,7 +15,7 @@
 
 &lt;h1&gt;LLM View {% llm_reset %}&lt;/h1&gt;
 
-{% llm prompt="Use only h2 and h3." %}
+{% llm_template prompt="Use only h2 and h3." %}
 ## 1. Data Summary
 
 ### Purpose of data collection
@@ -86,6 +86,6 @@
 
 ### Change tracking
 
-{% endllm %}</template>
+{% end_llm_template %}</template>
 	</view>
 </rdmo>
