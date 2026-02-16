@@ -52,7 +52,7 @@ class LLMNode(Node):
 
         task = "rdmo_llm_views.tasks.render"
         task_kwargs = {
-            "prompt": prompt
+            "user_prompt": prompt
         }
 
         task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
