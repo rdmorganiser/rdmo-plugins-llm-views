@@ -1,9 +1,14 @@
 from django import template
+from django.conf import settings
 from django.template import Node
+from django.template.loader import render_to_string
+
+from django_q.models import OrmQ, Task
+from django_q.tasks import async_task
 
 from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
 
-from ..utils import get_adapter, get_group, get_hash, get_project_export, render_reset_button, render_tag_async
+from ..utils import get_adapter, get_group, get_hash, get_project_export
 
 register = template.Library()
 
@@ -50,7 +55,7 @@ class LLMNode(Node):
         snapshot_id = project.snapshot["id"] if project.snapshot else None
         view_id = view["id"]
 
-        task = "rdmo_llm_views.tasks.render"
+        task_func = "rdmo_llm_views.tasks.render"
         task_kwargs = {
             "user_prompt": prompt
         }
@@ -58,7 +63,22 @@ class LLMNode(Node):
         task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
         task_group = get_group(project_id, snapshot_id, view_id)
 
-        return render_tag_async(task, task_name, task_group, **task_kwargs)
+        # check if a task with this name has already be computed
+        task = Task.objects.filter(name=task_name).first()
+
+        if task:
+            return task.result
+        else:
+            # check if there is a queued task with that name
+            if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
+                async_task(task_func, task_name=task_name, group=task_group, **task_kwargs)
+
+            return render_to_string("llm_views/tags/loading.html", {\
+                "project_id": project_id,
+                "snapshot_id": snapshot_id,
+                "view_id": view_id,
+                "timeout": settings.LLM_VIEWS_TIMEOUT
+            })
 
 
 @register.tag()
@@ -76,9 +96,13 @@ def llm_reset(context):
         snapshot_id = project.snapshot["id"] if project.snapshot else None
         view_id = view["id"]
 
-        return render_reset_button(project_id, snapshot_id, view_id)
-
-    return ""
+        return render_to_string("llm_views/tags/reset.html", {
+            "project_id": project_id,
+            "snapshot_id": snapshot_id,
+            "view_id": view_id,
+        })
+    else:
+        return ""
 
 
 @register.simple_tag(takes_context=True)

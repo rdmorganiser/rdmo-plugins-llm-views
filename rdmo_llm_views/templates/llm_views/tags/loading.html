@@ -1,0 +1,15 @@
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'llm_views/css/loading.css' %}" />
+
+<script src="{% static 'llm_views/js/loading.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        handlePolling({{ project_id }}, {{ snapshot_id|default:"null" }}, {{ view_id }}, {{ timeout }})
+    })
+</script>
+
+<div class="llm-view-loading">
+    <i class="fa fa-circle-o-notch fa-spin fa-fw" aria-hidden="true"></i>
+</div>

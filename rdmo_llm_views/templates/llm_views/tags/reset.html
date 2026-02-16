@@ -1,0 +1,15 @@
+{% load i18n %}
+{% load static %}
+
+<script src="{% static 'llm_views/js/reset.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('reset-llm-view').addEventListener('click', function () {
+            handleReset({{ project_id }}, {{ snapshot_id|default:"null" }}, {{ view_id }})
+        })
+    })
+</script>
+
+<button id="reset-llm-view" class="btn btn-link" title="{% trans 'Reset' %}">
+    <i class="fa fa-repeat" aria-hidden="true"></i>
+</button>
