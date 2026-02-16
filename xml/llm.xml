@@ -10,12 +10,29 @@
 		<title lang="de">LLM</title>
 		<help lang="de">Diese Ansicht nutzt in LLM um einen Datenmanagementplan zu erzeugen.</help>
 		<catalogs/>
-		<template>{% load view_tags %}
+		<template><![CDATA[
+{% load view_tags %}
 {% load llm_tags %}
 
-&lt;h1&gt;LLM View {% llm_reset %}&lt;/h1&gt;
+<h1>LLM {% llm_reset %}</h1>
 
-{% llm_template prompt="Use only h2 and h3." %}
+{% llm verbatim=False %}
+You are a knowledgeable assistant specializing in writing data management plans (DMPs).
+
+Instructions:
+- Fill the template with the context data.
+- Always produce output in Markdown format.
+- Use headings, bullet points, where appropriate.
+- Do not use tables.
+- Do not use ```.
+- Maintain a professional, clear, and concise writing style.
+
+Context data (JSON):
+
+{% render_project_export %}
+
+Template:
+
 ## 1. Data Summary
 
 ### Purpose of data collection
@@ -85,7 +102,7 @@
 ### Workflow transparency
 
 ### Change tracking
-
-{% end_llm_template %}</template>
+{% endllm %}
+]]></template>
 	</view>
 </rdmo>

@@ -6,36 +6,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from rdmo.core.utils import markdown2html
 
 
-class BaseAdapter:
+class LangChainAdapter:
 
-    def on_render_template(self, prompt, template, context):
-        raise NotImplementedError
-
-    def on_render_prompt(self, prompt):
-        raise NotImplementedError
-
-
-class LangChainAdapter(BaseAdapter):
-
-    def on_render_template(self, prompt, template, context):
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", settings.LLM_VIEWS_SYSTEM_PROMPT),
-                ("user", settings.LLM_VIEWS_USER_PROMPT)
-            ]
-        )
-
-        chain = prompt | self.llm | self.parser
-
-        result = chain.invoke({
-            "prompt": prompt,
-            "template": template,
-            "context": context
-        })
-
-        return markdown2html(result)
-
-    def on_render_prompt(self, user_prompt):
+    def on_render(self, user_prompt):
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("user", user_prompt)

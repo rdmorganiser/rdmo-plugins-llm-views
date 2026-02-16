@@ -3,7 +3,7 @@ from django.template import Node
 
 from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
 
-from ..utils import get_adapter, get_context, get_group, get_hash, render_reset_button, render_tag_async
+from ..utils import get_adapter, get_group, get_hash, get_project_export, render_reset_button, render_tag_async
 
 register = template.Library()
 
@@ -24,8 +24,6 @@ class LLMNode(Node):
 
     @classmethod
     def from_tag(cls, parser, token):
-        tag_name = token.contents.split()[0]
-
         _, *tag_args = token.split_contents()
 
         kwargs = {}
@@ -34,36 +32,26 @@ class LLMNode(Node):
                 key, value = tag_arg.split("=", 1)
                 kwargs[key] = parser.compile_filter(value)
 
-        nodelist = parser.parse((f"end_{tag_name}",))
+        nodelist = parser.parse(("endllm",))
         parser.delete_first_token()
         return cls(nodelist, kwargs)
 
-
-class LLMTemplateNode(LLMNode):
-
     def render(self, context):
         kwargs = self.resolve_kwargs(context)
-        content = self.render_content(context)
+        prompt = self.render_content(context)
 
         project = context.get("project")
         view = context.get("view")
 
         if not project or kwargs.get("verbatim"):
-            return f"<pre>{content}</pre>"
-
-        prompt = kwargs.get("prompt")
-        attributes = kwargs.get("attributes").split(",") if kwargs.get("attributes") else None
-
-        context = get_context(project, attributes)
+            return f"<pre>{prompt}</pre>"
 
         project_id = project.id
         snapshot_id = project.snapshot["id"] if project.snapshot else None
         view_id = view["id"]
 
-        task = "rdmo_llm_views.tasks.render_template"
+        task = "rdmo_llm_views.tasks.render"
         task_kwargs = {
-            "context": context,
-            "template": content,
             "prompt": prompt
         }
 
@@ -72,47 +60,10 @@ class LLMTemplateNode(LLMNode):
 
         return render_tag_async(task, task_name, task_group, **task_kwargs)
 
-        return ""
-
-
-class LLMPromptNode(LLMNode):
-
-    def render(self, context):
-        kwargs = self.resolve_kwargs(context)
-        content = self.render_content(context)
-
-        project = context.get("project")
-        view = context.get("view")
-
-        if not project or kwargs.get("verbatim"):
-            return f"<pre>{content}</pre>"
-
-        project = context.get("project")
-        view = context.get("view")
-
-        project_id = project.id
-        snapshot_id = project.snapshot["id"] if project.snapshot else None
-        view_id = view["id"]
-
-        task = "rdmo_llm_views.tasks.render_prompt"
-        task_kwargs = {
-            "user_prompt": content
-        }
-
-        task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
-        task_group = get_group(project_id, snapshot_id, view_id)
-
-        return render_tag_async(task, task_name, task_group, **task_kwargs)
-
 
 @register.tag()
-def llm_template(parser, token):
-    return LLMTemplateNode.from_tag(parser, token)
-
-
-@register.tag()
-def llm_prompt(parser, token):
-    return LLMPromptNode.from_tag(parser, token)
+def llm(parser, token):
+    return LLMNode.from_tag(parser, token)
 
 
 @register.simple_tag(takes_context=True)
@@ -128,6 +79,13 @@ def llm_reset(context):
         return render_reset_button(project_id, snapshot_id, view_id)
 
     return ""
+
+
+@register.simple_tag(takes_context=True)
+def render_project_export(context, project=None):
+    if project is None:
+        project = context.get("project")
+    return get_project_export(project)
 
 
 @register.simple_tag(takes_context=True)
