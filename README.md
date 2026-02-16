@@ -20,31 +20,6 @@ Add the following settings to your `config/settings/local.py` (and adjust them a
 
 ```python
 INSTALLED_APPS = ['rdmo_llm_views', *INSTALLED_APPS]
-
-LLM_VIEWS_SYSTEM_PROMPT = '''
-You are a knowledgeable assistant specializing in writing data management plans (DMPs).
-
-- Always produce output in Markdown format.
-- Use headings, bullet points, where appropriate.
-- Do not use tables.
-- Do not use ```.
-- Keep your response concise, not exceeding one page.
-- Maintain a professional, clear, and concise writing style.
-'''
-LLM_VIEWS_USER_PROMPT = '''
-Project data (JSON): {project}
-
-Template: {template}
-
-Prompt: {prompt}
-
-Instructions:
-- Fill the template with the project data.
-- Take the prompt into account.
-'''
-
-LLM_VIEWS_PLACEHOLDER = "🤔"
-LLM_VIEWS_TIMEOUT = 1000
 ```
 
 For `openai` use:
@@ -79,8 +54,9 @@ Q_CLUSTER = {
     'bulk': 10,
     'orm': 'default'
 }
-```
 
+LLM_VIEWS_TIMEOUT = 4000
+```
 
 Usage
 -----
