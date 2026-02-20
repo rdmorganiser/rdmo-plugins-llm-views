@@ -51,5 +51,14 @@ class ProjectViewSet(GenericViewSet):
         except KeyError as e:
             raise ValidationError({ "view": [_("This field may not be blank.")] }) from e
 
-        Task.objects.filter(group=get_group(project.id, snapshot_id, view_id)).delete()
+        group_name = get_group(project.id, snapshot_id, view_id)
+
+        # remove completed tasks
+        Task.objects.filter(group=group_name).delete()
+
+        # remove queued tasks
+        for queued_task in OrmQ.objects.all():
+            if queued_task.group() == group_name:
+                queued_task.delete()
+
         return Response(status=status.HTTP_204_NO_CONTENT)
