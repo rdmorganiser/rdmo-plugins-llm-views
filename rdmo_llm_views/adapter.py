@@ -1,46 +1,38 @@
 from django.conf import settings
 
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate
-
 from rdmo.core.utils import markdown2html
 
 
 class LangChainAdapter:
 
-    def on_render(self, user_prompt):
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("user", user_prompt)
-            ]
-        )
+    def on_render(self, prompt, model):
+        args = args = {
+            **settings.LLM_VIEWS_LLM_ARGS,
+            **({"model": model} if model is not None else {})
+        }
 
-        chain = prompt | self.llm | self.parser
+        llm = self.get_llm(args)
 
-        result = chain.invoke({})
+        try:
+            result = llm.invoke(prompt)
+        except Exception as e:
+            return str(e)
 
-        return markdown2html(result)
+        return markdown2html(result.content)
 
-    @property
-    def llm(self):
+    def get_llm(self, args):
         raise NotImplementedError
-
-    @property
-    def parser(self):
-        return StrOutputParser()
 
 
 class OpenAILangChainAdapter(LangChainAdapter):
 
-    @property
-    def llm(self):
+    def get_llm(self, args):
         from langchain_openai import ChatOpenAI
-        return ChatOpenAI(**settings.LLM_VIEWS_LLM_ARGS)
+        return ChatOpenAI(**args)
 
 
 class OllamaLangChainAdapter(LangChainAdapter):
 
-    @property
-    def llm(self):
+    def get_llm(self, args):
         from langchain_ollama import ChatOllama
-        return ChatOllama(**settings.LLM_VIEWS_LLM_ARGS)
+        return ChatOllama(**args)

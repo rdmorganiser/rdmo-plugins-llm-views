@@ -47,6 +47,7 @@ class LLMNode(Node):
 
         project = context.get("project")
         view = context.get("view")
+        model = kwargs.get("model") if getattr(settings, "LLM_VIEWS_SELECT_MODEL", False) else None
 
         if not project or kwargs.get("verbatim"):
             return f"<pre>{prompt}</pre>"
@@ -57,7 +58,8 @@ class LLMNode(Node):
 
         task_func = "rdmo_llm_views.tasks.render"
         task_kwargs = {
-            "user_prompt": prompt
+            "prompt": prompt,
+            "model": model
         }
 
         task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
@@ -73,7 +75,7 @@ class LLMNode(Node):
             if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
                 async_task(task_func, task_name=task_name, group=task_group, **task_kwargs)
 
-            return render_to_string("llm_views/tags/loading.html", {\
+            return render_to_string("llm_views/tags/loading.html", {
                 "project_id": project_id,
                 "snapshot_id": snapshot_id,
                 "view_id": view_id,

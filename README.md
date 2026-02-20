@@ -54,8 +54,13 @@ Q_CLUSTER = {
     'bulk': 10,
     'orm': 'default'
 }
+```
 
-LLM_VIEWS_TIMEOUT = 4000
+Additionally the following settings can be used:
+
+```python
+LLM_VIEWS_SELECT_MODEL = True  # enable model selection in the view
+LLM_VIEWS_TIMEOUT = 4000       # timeout for polling
 ```
 
 Usage
