@@ -4,12 +4,8 @@ from rdmo.core.utils import markdown2html
 
 
 class LangChainAdapter:
-
     def on_render(self, prompt, model):
-        args = {
-            **settings.LLM_VIEWS_LLM_ARGS,
-            **({"model": model} if model is not None else {})
-        }
+        args = {**settings.LLM_VIEWS_LLM_ARGS, **({'model': model} if model is not None else {})}
 
         llm = self.get_llm(args)
 
@@ -25,14 +21,14 @@ class LangChainAdapter:
 
 
 class OpenAILangChainAdapter(LangChainAdapter):
-
     def get_llm(self, args):
         from langchain_openai import ChatOpenAI
+
         return ChatOpenAI(**args)
 
 
 class OllamaLangChainAdapter(LangChainAdapter):
-
     def get_llm(self, args):
         from langchain_ollama import ChatOllama
+
         return ChatOllama(**args)
