@@ -6,7 +6,7 @@ from rdmo.core.utils import markdown2html
 class LangChainAdapter:
 
     def on_render(self, prompt, model):
-        args = args = {
+        args = {
             **settings.LLM_VIEWS_LLM_ARGS,
             **({"model": model} if model is not None else {})
         }
