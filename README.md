@@ -22,6 +22,12 @@ Add the following settings to your `config/settings/local.py` (and adjust them a
 INSTALLED_APPS = ['rdmo_llm_views', *INSTALLED_APPS]
 ```
 
+In addition, the llm views endpoints needs to be added to the `config/urls.py`
+
+```python
+urlpatterns += [path('api/v1/', include('rdmo_llm_views.urls'))]
+```
+
 For `openai` use:
 
 ```python

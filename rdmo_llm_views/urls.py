@@ -10,5 +10,5 @@ router = ExtendedDefaultRouter()
 project_route = router.register(r'projects', ProjectViewSet, basename='project')
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('llm-views/', include(router.urls)),
 ]
