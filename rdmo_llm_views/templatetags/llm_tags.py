@@ -47,16 +47,24 @@ class LLMNode(Node):
         project = context.get('project')
         view = context.get('view')
         model = kwargs.get('model') if getattr(settings, 'LLM_VIEWS_SELECT_MODEL', False) else None
+        system_prompt = context.get('system_prompt', '')
 
-        if not project or kwargs.get('verbatim'):
+        if not project or kwargs.get('print'):
             return f'<pre>{prompt}</pre>'
 
         project_id = project.id
         snapshot_id = project.snapshot['id'] if project.snapshot else None
         view_id = view['id']
 
+        if kwargs.get('type') == 'system':
+            context['system_prompt'] = system_prompt + prompt
+            return ''
+
         task_func = 'rdmo_llm_views.tasks.render'
-        task_kwargs = {'prompt': prompt, 'model': model}
+        task_kwargs = {
+            'prompt': system_prompt + prompt,
+            'model': model,
+        }
 
         task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
         task_group = get_group(project_id, snapshot_id, view_id)
