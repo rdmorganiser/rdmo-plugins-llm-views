@@ -2,13 +2,13 @@ import hashlib
 import json
 
 from django.conf import settings
+from django.utils.module_loading import import_string
 
-from rdmo.core.utils import import_class
 from rdmo.projects.exports import AnswersExportMixin
 
 
 def get_adapter():
-    return import_class(settings.LLM_VIEWS_ADAPTER)()
+    return import_string(settings.LLM_VIEWS_ADAPTER)()
 
 
 def get_group(*args, **kwargs):
