@@ -47,6 +47,9 @@ openai = [
 ollama = [
   "langchain-ollama",
 ]
+anthropic = [
+  "langchain-anthropic"
+]
 dev = [
     "build",
     "pre-commit",

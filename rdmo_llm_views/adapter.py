@@ -50,3 +50,10 @@ class OllamaLangChainAdapter(LangChainAdapter):
         from langchain_ollama import ChatOllama
 
         return ChatOllama(**args)
+
+
+class AnthropicLangChainAdapter(LangChainAdapter):
+    def get_llm(self, args):
+        from langchain_anthropic import ChatAnthropic
+
+        return ChatAnthropic(**args)
