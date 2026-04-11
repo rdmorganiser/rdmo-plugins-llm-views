@@ -200,14 +200,6 @@ If `LLM_VIEWS_SELECT_MODEL = True` is set in the RDMO settings, the model can be
 {% endllm %}
 ```
 
-I you add `verbatim="true"` to the `llm` tag, the prompt will not be send to the llm, but just printed in verbatim:
-
-```django
-{% llm verbatim="true" %}
-...
-{% endllm %}
-```
-
 Each `llm` tag is send to the LLM separately. Tags with `type="system"` are not send to the LLM but prepended to all
 **other** LLM calls:
 
@@ -227,6 +219,22 @@ Template:
 
 {% llm %}
 Template:
+...
+{% endllm %}
+```
+
+If you add `verbatim="true"` to the `llm` tag, the prompt will not be send to the llm, but just printed in verbatim:
+
+```django
+{% llm verbatim="true" %}
+...
+{% endllm %}
+```
+
+If you add `metadata="true"` to the `llm` tag, additional metadata information will be rendered on top of the view:
+
+```django
+{% llm metadata="true" %}
 ...
 {% endllm %}
 ```

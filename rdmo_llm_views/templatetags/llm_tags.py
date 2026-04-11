@@ -62,7 +62,7 @@ class LLMNode(Node):
             context['system_prompt'] = system_prompt + prompt
             return ''
 
-        task_func = 'rdmo_llm_views.tasks.render'
+        task_func = 'rdmo_llm_views.tasks.invoke'
         task_kwargs = {
             'prompt': system_prompt + prompt,
             'model': model,
@@ -75,7 +75,11 @@ class LLMNode(Node):
         task = Task.objects.filter(name=task_name).first()
 
         if task:
-            return task.result
+            if kwargs.get('metadata') == 'true':
+                return adapter.render_metadata(task.result) + adapter.render_content(task.result)
+            else:
+                return adapter.render_content(task.result)
+
         else:
             # check if there is a queued task with that name
             if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
