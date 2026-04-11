@@ -182,7 +182,7 @@ e.g.:
 ```django
 Instructions:
 ...
-- Translate the whole output to {% format_current_language %}.
+- Translate the whole output to {% render_current_language %}.
 ```
 
 The current date can be accessed using the regular Django
