@@ -2,10 +2,12 @@ from django import template
 from django.conf import settings
 from django.template import Node
 from django.template.loader import render_to_string
+from django.utils.translation import get_language
 
 from django_q.models import OrmQ, Task
 from django_q.tasks import async_task
 
+from rdmo.core.utils import get_languages
 from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
 
 from ..utils import get_adapter, get_group, get_hash, get_project_export
@@ -49,7 +51,7 @@ class LLMNode(Node):
         model = kwargs.get('model') if getattr(settings, 'LLM_VIEWS_SELECT_MODEL', False) else None
         system_prompt = context.get('system_prompt', '')
 
-        if not project or kwargs.get('print'):
+        if not project or kwargs.get('verbatim') == 'true':
             return f'<pre>{prompt}</pre>'
 
         project_id = project.id
@@ -115,6 +117,15 @@ def llm_reset(context):
         )
     else:
         return ''
+
+
+@register.simple_tag()
+def render_current_language():
+    current_language = get_language()
+    for lang_code, lang_string, _ in get_languages():
+        if current_language == lang_code:
+            return lang_string
+    raise RuntimeError(f'Language "{current_language}" not found.')
 
 
 @register.simple_tag(takes_context=True)
