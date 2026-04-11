@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 
 from django.conf import settings
 
@@ -20,13 +21,28 @@ class LangChainAdapter:
         llm = self.get_llm(args)
 
         try:
+            start_time = time.perf_counter()
+
             result = llm.invoke(prompt)
+
+            elapsed_time = time.perf_counter() - start_time
 
             result_dict = message_to_dict(result)
             logger.debug('result = %s', json.dumps(result_dict, indent=2))
 
-            usage_metadata = result_dict.get('data', {}).get('usage_metadata', {})
-            logger_usage.info(json.dumps({'model': args.get('model'), **usage_metadata}))
+            usage_metadata = {
+                key: result_dict.get('data', {}).get('usage_metadata', {}).get(key)
+                for key in ('input_tokens', 'output_tokens', 'total_tokens')
+            }
+            logger_usage.info(
+                json.dumps(
+                    {
+                        'model': args.get('model'),
+                        'elapsed_time': elapsed_time,
+                        **usage_metadata,
+                    }
+                )
+            )
 
         except Exception as e:
             logger.exception(e)
