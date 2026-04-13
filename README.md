@@ -13,8 +13,8 @@ pip install git+https://github.com/rdmorganiser/rdmo-plugins-llm-views
 # alternatively, from a local copy
 git clone git@github.com:rdmorganiser/rdmo-plugins-llm-views
 pip install -e rdmo-plugins-llm-views[openai]
-pip install -e rdmo-plugins-llm-views[anthopic]
-pip install -e rdmo-plugins-llm-views[ollama]  # alternatively
+pip install -e rdmo-plugins-llm-views[anthopic]  # alternatively
+pip install -e rdmo-plugins-llm-views[ollama]    # alternatively
 ```
 
 Add the following settings to your `config/settings/local.py` (and adjust them as required):
