@@ -42,6 +42,6 @@ def get_project_export(project_wrapper):
         export_plugin.snapshot = None
 
         data += export_plugin.get_data()
-        return json.dumps(data, indent=2).replace(r'{', r'{{').replace(r'}', r'}}')
+        return json.dumps(data, indent=2, ensure_ascii=False).replace(r'{', r'{{').replace(r'}', r'}}')
     else:
         return []
