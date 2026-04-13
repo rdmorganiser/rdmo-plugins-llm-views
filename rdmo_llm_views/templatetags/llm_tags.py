@@ -75,10 +75,12 @@ class LLMNode(Node):
         task = Task.objects.filter(name=task_name).first()
 
         if task:
+            result_format = kwargs.get('format', 'markdown')
+
             if kwargs.get('metadata') == 'true':
-                return adapter.render_metadata(task.result) + adapter.render_content(task.result)
+                return adapter.render_metadata(task.result) + adapter.render_content(task.result, result_format)
             else:
-                return adapter.render_content(task.result)
+                return adapter.render_content(task.result, result_format)
 
         else:
             # check if there is a queued task with that name

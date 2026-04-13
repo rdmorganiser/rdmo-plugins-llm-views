@@ -7,8 +7,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from langchain_core.messages import message_to_dict
-
-from rdmo.core.utils import markdown2html
+from markdown import markdown
 
 logger = logging.getLogger(__name__)
 logger_usage = logging.getLogger('rdmo_llm_views.usage')
@@ -67,9 +66,14 @@ class LangChainAdapter:
         else:
             return ''
 
-    def render_content(self, result_dict):
+    def render_content(self, result_dict, result_format):
         if isinstance(result_dict, dict):
-            return markdown2html(result_dict['data']['content'])
+            if result_format == 'markdown':
+                return markdown(result_dict['data']['content'])
+            elif result_format == 'pre':
+                return f'<pre>{result_dict["data"]["content"]}</pre>'
+            else:
+                return result_dict['data']['content']
         else:
             return render_to_string('llm_views/tags/error.html', {'result': result_dict})
 
