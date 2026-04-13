@@ -2,10 +2,12 @@ from django import template
 from django.conf import settings
 from django.template import Node
 from django.template.loader import render_to_string
+from django.utils.translation import get_language
 
 from django_q.models import OrmQ, Task
 from django_q.tasks import async_task
 
+from rdmo.core.utils import get_languages
 from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
 
 from ..utils import get_adapter, get_group, get_hash, get_project_export
@@ -16,7 +18,6 @@ adapter = get_adapter()
 
 
 class LLMNode(Node):
-
     def __init__(self, nodelist, kwargs):
         self.nodelist = nodelist
         self.kwargs = kwargs
@@ -33,11 +34,11 @@ class LLMNode(Node):
 
         kwargs = {}
         for tag_arg in tag_args:
-            if "=" in tag_arg:
-                key, value = tag_arg.split("=", 1)
+            if '=' in tag_arg:
+                key, value = tag_arg.split('=', 1)
                 kwargs[key] = parser.compile_filter(value)
 
-        nodelist = parser.parse(("endllm",))
+        nodelist = parser.parse(('endllm',))
         parser.delete_first_token()
         return cls(nodelist, kwargs)
 
@@ -45,21 +46,26 @@ class LLMNode(Node):
         kwargs = self.resolve_kwargs(context)
         prompt = self.render_content(context)
 
-        project = context.get("project")
-        view = context.get("view")
-        model = kwargs.get("model") if getattr(settings, "LLM_VIEWS_SELECT_MODEL", False) else None
+        project = context.get('project')
+        view = context.get('view')
+        model = kwargs.get('model') if getattr(settings, 'LLM_VIEWS_SELECT_MODEL', False) else None
+        system_prompt = context.get('system_prompt', '')
 
-        if not project or kwargs.get("verbatim"):
-            return f"<pre>{prompt}</pre>"
+        if not project or kwargs.get('verbatim') == 'true':
+            return f'<pre>{prompt}</pre>'
 
         project_id = project.id
-        snapshot_id = project.snapshot["id"] if project.snapshot else None
-        view_id = view["id"]
+        snapshot_id = project.snapshot['id'] if project.snapshot else None
+        view_id = view['id']
 
-        task_func = "rdmo_llm_views.tasks.render"
+        if kwargs.get('type') == 'system':
+            context['system_prompt'] = system_prompt + prompt
+            return ''
+
+        task_func = 'rdmo_llm_views.tasks.invoke'
         task_kwargs = {
-            "prompt": prompt,
-            "model": model
+            'prompt': system_prompt + prompt,
+            'model': model,
         }
 
         task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
@@ -69,18 +75,27 @@ class LLMNode(Node):
         task = Task.objects.filter(name=task_name).first()
 
         if task:
-            return task.result
+            result_format = kwargs.get('format', 'markdown')
+
+            if kwargs.get('metadata') == 'true':
+                return adapter.render_metadata(task.result) + adapter.render_content(task.result, result_format)
+            else:
+                return adapter.render_content(task.result, result_format)
+
         else:
             # check if there is a queued task with that name
             if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
                 async_task(task_func, task_name=task_name, group=task_group, **task_kwargs)
 
-            return render_to_string("llm_views/tags/loading.html", {
-                "project_id": project_id,
-                "snapshot_id": snapshot_id,
-                "view_id": view_id,
-                "timeout": settings.LLM_VIEWS_TIMEOUT
-            })
+            return render_to_string(
+                'llm_views/tags/loading.html',
+                {
+                    'project_id': project_id,
+                    'snapshot_id': snapshot_id,
+                    'view_id': view_id,
+                    'timeout': settings.LLM_VIEWS_TIMEOUT,
+                },
+            )
 
 
 @register.tag()
@@ -90,60 +105,71 @@ def llm(parser, token):
 
 @register.simple_tag(takes_context=True)
 def llm_reset(context):
-    project = context.get("project")
-    view = context.get("view")
+    project = context.get('project')
+    view = context.get('view')
 
     if project:
         project_id = project.id
-        snapshot_id = project.snapshot["id"] if project.snapshot else None
-        view_id = view["id"]
+        snapshot_id = project.snapshot['id'] if project.snapshot else None
+        view_id = view['id']
 
-        return render_to_string("llm_views/tags/reset.html", {
-            "project_id": project_id,
-            "snapshot_id": snapshot_id,
-            "view_id": view_id,
-        })
+        return render_to_string(
+            'llm_views/tags/reset.html',
+            {
+                'project_id': project_id,
+                'snapshot_id': snapshot_id,
+                'view_id': view_id,
+            },
+        )
     else:
-        return ""
+        return ''
+
+
+@register.simple_tag()
+def render_current_language():
+    current_language = get_language()
+    for lang_code, lang_string, _ in get_languages():
+        if current_language == lang_code:
+            return lang_string
+    raise RuntimeError(f'Language "{current_language}" not found.')
 
 
 @register.simple_tag(takes_context=True)
 def render_project_export(context, project=None):
     if project is None:
-        project = context.get("project")
+        project = context.get('project')
     return get_project_export(project)
 
 
 @register.simple_tag(takes_context=True)
-def format_value(context, attribute, set_prefix="", set_index=0, index=0, project=None):
-    value = get_value(context, attribute, set_prefix=set_prefix, set_index=set_index,
-                                 index=index, project=project)
-    return format_string(value.get("value_and_unit", ""))
+def format_value(context, attribute, set_prefix='', set_index=0, index=0, project=None):
+    value = get_value(context, attribute, set_prefix=set_prefix, set_index=set_index, index=index, project=project)
+    return format_string(value.get('value_and_unit', ''))
 
 
 @register.simple_tag(takes_context=True)
-def format_value_list(context, attribute, set_prefix="", set_index=0, project=None):
+def format_value_list(context, attribute, set_prefix='', set_index=0, project=None):
     values = get_values(context, attribute, set_prefix=set_prefix, set_index=set_index, project=project)
-    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+    return ', '.join(format_string(value.get('value_and_unit', '')) for value in values)
 
 
 @register.simple_tag(takes_context=True)
-def format_value_inline_list(context, attribute, set_prefix="", set_index=0, project=None):
+def format_value_inline_list(context, attribute, set_prefix='', set_index=0, project=None):
     values = get_values(context, attribute, set_prefix=set_prefix, set_index=set_index, project=project)
-    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+    return ', '.join(format_string(value.get('value_and_unit', '')) for value in values)
 
 
 @register.simple_tag(takes_context=True)
-def format_set_value(context, set, attribute, set_prefix="", index=0, project=None):
+def format_set_value(context, set, attribute, set_prefix='', index=0, project=None):
     value = get_set_value(context, set, attribute, set_prefix=set_prefix, index=index, project=project)
-    return format_string(value.get("value_and_unit", ""))
+    return format_string(value.get('value_and_unit', ''))
 
 
 @register.simple_tag(takes_context=True)
-def format_set_value_list(context, set, attribute, set_prefix="", project=None):
+def format_set_value_list(context, set, attribute, set_prefix='', project=None):
     values = get_set_values(context, set, attribute, set_prefix=set_prefix, project=project)
-    return ", ".join(format_string(value.get("value_and_unit", "")) for value in values)
+    return ', '.join(format_string(value.get('value_and_unit', '')) for value in values)
 
 
 def format_string(string):
-    return string.strip().replace("\n", " ").replace("\t", " ")
+    return string.strip().replace('\n', ' ').replace('\t', ' ')

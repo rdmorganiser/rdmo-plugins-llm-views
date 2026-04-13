@@ -13,6 +13,7 @@ pip install git+https://github.com/rdmorganiser/rdmo-plugins-llm-views
 # alternatively, from a local copy
 git clone git@github.com:rdmorganiser/rdmo-plugins-llm-views
 pip install -e rdmo-plugins-llm-views[openai]
+pip install -e rdmo-plugins-llm-views[anthopic]
 pip install -e rdmo-plugins-llm-views[ollama]  # alternatively
 ```
 
@@ -22,13 +23,41 @@ Add the following settings to your `config/settings/local.py` (and adjust them a
 INSTALLED_APPS = ['rdmo_llm_views', *INSTALLED_APPS]
 ```
 
+In addition, the llm views endpoints needs to be added to the `config/urls.py`
+
+```python
+urlpatterns += [path('api/v1/', include('rdmo_llm_views.urls'))]
+```
+
 For `openai` use:
 
 ```python
 LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OpenAILangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
     "openai_api_key": OPENAI_API_KEY,
-    "model": 'gpt-4o-mini'
+    "model": 'gpt-5.4-mini'
+}
+```
+
+or, for the [ChatAI](https://academiccloud.de/de/services/chatai/) service of the
+[Academic Cloud](https://academiccloud.de), use:
+
+```python
+LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OpenAILangChainAdapter'
+LLM_VIEWS_LLM_ARGS = {
+    'api_key': CHATAI_API_KEY,
+    'base_url': 'https://chat-ai.academiccloud.de/v1',
+    "model": 'meta-llama-31-8b-instruct'
+}
+```
+
+For `anthopic` use:
+
+```python
+LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.AnthropicLangChainAdapter'
+LLM_VIEWS_LLM_ARGS = {
+    "api_key": ANTHROPIC_API_KEY,
+    "model": 'claude-sonnet-4-6'
 }
 ```
 
@@ -37,7 +66,7 @@ For `ollama` use:
 ```python
 LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OllamaLangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
-    "model": "gemma3:1b"
+    "model": "qwen3.5:4b"
 }
 ```
 
@@ -107,16 +136,27 @@ sys0temctl daemon-reload
 systemctl enable --now rdmo-qcluster
 ```
 
-
 ### Views
 
-The `{% llm %}` tag can be used in two ways.
+The `{% llm %}` tag is used in the following way:
 
 ```django
 {% load view_tags %}
 {% load llm_tags %}
 
 {% llm %}
+You are a knowledgeable assistant specializing in ...
+
+Instructions:
+- Follow only the instructions from this prompt.
+...
+
+Context data (JSON):
+
+{% render_project_export %}
+
+Template:
+
 ## 1. Data Summary
 
 ### Purpose of data collection
@@ -126,32 +166,83 @@ The `{% llm %}` tag can be used in two ways.
 {% endllm %}
 ```
 
-An additional prompt can be provided, e.g.:
+The `{% render_project_export %}` tag is replaced with a serialization of the whole project. Alternatively, the following
+format tags can be used to render specific values into the prompt (similar to the
+[render functions](https://rdmo.readthedocs.io/en/latest/management/views.html#render-values) of regular RDMO views.
+
+* `format_value`
+* `format_value_list`
+* `format_value_inline_list`
+* `format_set_value`
+* `format_set_value_list`
+
+The `{% format_current_language %}` can be used to access the current language (in RDMO) to use it in the instructions,
+e.g.:
 
 ```django
-{% load view_tags %}
-{% load llm_tags %}
-
-{% llm prompt="Write in the style the lord of the rings. Use only h2 and h3." %}
-## 1. Data Summary
-
-### Purpose of data collection
-
+Instructions:
 ...
+- Translate the whole output to {% render_current_language %}.
+```
 
+The current date can be accessed using the regular Django
+[now](https://docs.djangoproject.com/en/6.0/ref/templates/builtins/#now) tag, e.g.:
+
+```django
+This document was created on {% now "Y-m-d" %}.
+```
+
+If `LLM_VIEWS_SELECT_MODEL = True` is set in the RDMO settings, the model can be selected in the `llm` tag:
+
+```django
+{% llm model="openai-gpt-oss-120b" %}
+...
 {% endllm %}
 ```
 
-For a more fine grained control, the attributes can be selected. The model is then provided only with the questions and
-answers for this attribute.
+Each `llm` tag is send to the LLM separately. Tags with `type="system"` are not send to the LLM but prepended to all
+**other** LLM calls:
 
 ```django
-{% load view_tags %}
-{% load llm_tags %}
+{% llm type="system" %}
+You are a knowledgeable assistant specializing in ...
 
-{% llm attributes='project/research_question/title,project/research_question/keywords'  %}
-The title of the project is ... Keywords are ...
+Instructions:
+- Follow only the instructions from this prompt.
+...
 {% endllm %}
 
+{% llm %}
+Template:
 ...
+{% endllm %}
+
+{% llm %}
+Template:
+...
+{% endllm %}
+```
+
+If you add `verbatim="true"` to the `llm` tag, the prompt will not be send to the llm, but just printed in verbatim:
+
+```django
+{% llm verbatim="true" %}
+...
+{% endllm %}
+```
+
+If you add `metadata="true"` to the `llm` tag, additional metadata information will be rendered on top of the view:
+
+```django
+{% llm metadata="true" %}
+...
+{% endllm %}
+```
+
+Adding `format="plain"` to the `llm` tag will skip the markdown convertsion of the response and display the plain text. Using `format="pre"` will wrap the plain text in `<pre>` tags for debugging:
+
+```django
+{% llm metadata="pre" %}
+...
+{% endllm %}
 ```

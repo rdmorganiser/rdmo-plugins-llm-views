@@ -1,0 +1,26 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <dl class="row mb-10">
+            <dt class="col-sm-2">Model provider:</dt>
+            <dd class="col-sm-10">{{ result.data.response_metadata.model_provider }}</dd>
+            <dt class="col-sm-2">Model name:</dt>
+            <dd class="col-sm-10">{{ result.data.response_metadata.model_name }}</dd>
+        </dl>
+        <dl class="row mb-10">
+            <dt class="col-sm-2">Start time:</dt>
+            <dd class="col-sm-10">{{ result.data.time.start_time }}</dd>
+            <dt class="col-sm-2">End time:</dt>
+            <dd class="col-sm-10">{{ result.data.time.end_time }}</dd>
+            <dt class="col-sm-2">Elapsed time:</dt>
+            <dd class="col-sm-10">{{ result.data.time.elapsed_time }} s</dd>
+        </dl>
+        <dl class="row mb-0">
+            <dt class="col-sm-2">Input tokens:</dt>
+            <dd class="col-sm-10">{{ result.data.usage_metadata.input_tokens }}</dd>
+            <dt class="col-sm-2">Output tokens:</dt>
+            <dd class="col-sm-10">{{ result.data.usage_metadata.output_tokens }}</dd>
+            <dt class="col-sm-2">Total tokens:</dt>
+            <dd class="col-sm-10">{{ result.data.usage_metadata.total_tokens }}</dd>
+        </dl>
+    </div>
+</div>
