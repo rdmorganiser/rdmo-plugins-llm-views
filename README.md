@@ -238,3 +238,11 @@ If you add `metadata="true"` to the `llm` tag, additional metadata information w
 ...
 {% endllm %}
 ```
+
+Adding `format="plain"` to the `llm` tag will skip the markdown convertsion of the response and display the plain text. Using `format="pre"` will wrap the plain text in `<pre>` tags for debugging:
+
+```django
+{% llm metadata="pre" %}
+...
+{% endllm %}
+```
