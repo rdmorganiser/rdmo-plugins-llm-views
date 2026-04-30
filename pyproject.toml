@@ -50,6 +50,9 @@ ollama = [
 anthropic = [
   "langchain-anthropic"
 ]
+mistralai = [
+  "langchain-mistralai"
+]
 dev = [
     "build",
     "pre-commit",

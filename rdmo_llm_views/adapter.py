@@ -97,3 +97,11 @@ class AnthropicLangChainAdapter(LangChainAdapter):
         from langchain_anthropic import ChatAnthropic
 
         return ChatAnthropic(**args)
+
+
+class MistralAILangChainAdapter(LangChainAdapter):
+    def get_llm(self, args):
+        from langchain_mistralai import ChatMistralAI
+
+        print(args)
+        return ChatMistralAI(**args)

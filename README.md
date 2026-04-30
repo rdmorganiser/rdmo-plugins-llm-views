@@ -13,8 +13,9 @@ pip install git+https://github.com/rdmorganiser/rdmo-plugins-llm-views
 # alternatively, from a local copy
 git clone git@github.com:rdmorganiser/rdmo-plugins-llm-views
 pip install -e rdmo-plugins-llm-views[openai]
-pip install -e rdmo-plugins-llm-views[anthopic]  # alternatively
-pip install -e rdmo-plugins-llm-views[ollama]    # alternatively
+pip install -e rdmo-plugins-llm-views[anthopic]   # alternatively
+pip install -e rdmo-plugins-llm-views[mistralai]  # alternatively
+pip install -e rdmo-plugins-llm-views[ollama]     # alternatively
 ```
 
 Add the following settings to your `config/settings/local.py` (and adjust them as required):
@@ -58,6 +59,16 @@ LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.AnthropicLangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
     "api_key": ANTHROPIC_API_KEY,
     "model": 'claude-sonnet-4-6'
+}
+```
+
+For `mistralai` use:
+
+```python
+LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.MistralAILangChainAdapter'
+LLM_VIEWS_LLM_ARGS = {
+    "api_key": MISTRALAI_API_KEY,
+    "model": 'mistral-small-latest'
 }
 ```
 
