@@ -8,7 +8,9 @@ from rdmo.projects.exports import AnswersExportMixin
 
 
 def get_adapter():
-    return import_string(settings.LLM_VIEWS_ADAPTER)()
+    adapter_class = getattr(settings, 'LLM_VIEWS_ADAPTER', None)
+    if adapter_class:
+        return import_string(adapter_class)()
 
 
 def get_group(*args, **kwargs):
