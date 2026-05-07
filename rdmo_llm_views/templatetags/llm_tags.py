@@ -144,7 +144,7 @@ def render_project_export(context, project=None):
 @register.simple_tag(takes_context=True)
 def format_value(context, attribute, set_prefix='', set_index=0, index=0, project=None):
     value = get_value(context, attribute, set_prefix=set_prefix, set_index=set_index, index=index, project=project)
-    return format_string(value.get('value_and_unit', ''))
+    return format_string(value.get('value_and_unit', '')) if value else ''
 
 
 @register.simple_tag(takes_context=True)
