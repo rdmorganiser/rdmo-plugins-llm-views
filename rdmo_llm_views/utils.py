@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from rdmo.projects.exports import AnswersExportMixin
+from rdmo.views.utils import ProjectWrapper
 
 
 def get_adapter():
@@ -24,8 +25,8 @@ def get_hash(*args, **kwargs):
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def get_project_export(project_wrapper):
-    if project_wrapper:
+def get_project_export(project_wrapper, uris):
+    if isinstance(project_wrapper, ProjectWrapper):
         data = [
             {
                 'question': 'What is the title of the project?',
@@ -46,4 +47,4 @@ def get_project_export(project_wrapper):
         data += export_plugin.get_data()
         return json.dumps(data, indent=2, ensure_ascii=False).replace(r'{', r'{{').replace(r'}', r'}}')
     else:
-        return []
+        return ''
