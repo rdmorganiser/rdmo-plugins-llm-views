@@ -86,13 +86,15 @@ settings need to be added:
 
 ```python
 Q_CLUSTER = {
-    'name': 'DjangORM',
+    'name': 'rdmo_llm_views',
     'workers': 4,
-    'timeout': 90,
-    'retry': 120,
-    'queue_limit': 50,
-    'bulk': 10,
-    'orm': 'default'
+    'timeout': 300,
+    'retry': 900,
+    'compress': True,
+    'save_limit': 0,
+    'queue_limit': 1,
+    'max_attempts': 1,
+    'orm': 'default',
 }
 ```
 
