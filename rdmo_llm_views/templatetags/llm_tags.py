@@ -1,106 +1,18 @@
 from django import template
-from django.conf import settings
-from django.template import Node
 from django.template.loader import render_to_string
 from django.utils.translation import get_language
-
-from django_q.models import OrmQ, Task
-from django_q.tasks import async_task
 
 from rdmo.core.utils import get_languages
 from rdmo.views.templatetags.view_tags import get_set_value, get_set_values, get_value, get_values
 
-from ..utils import get_adapter, get_group, get_hash, get_project_export
+from .nodes import LLMNode, RenderProjectExportNode
 
 register = template.Library()
 
-adapter = get_adapter()
 
-
-class LLMNode(Node):
-    def __init__(self, nodelist, kwargs):
-        self.nodelist = nodelist
-        self.kwargs = kwargs
-
-    def render_content(self, context):
-        return self.nodelist.render(context)
-
-    def resolve_kwargs(self, context):
-        return {k: v.resolve(context) for k, v in self.kwargs.items()}
-
-    @classmethod
-    def from_tag(cls, parser, token):
-        _, *tag_args = token.split_contents()
-
-        kwargs = {}
-        for tag_arg in tag_args:
-            if '=' in tag_arg:
-                key, value = tag_arg.split('=', 1)
-                kwargs[key] = parser.compile_filter(value)
-
-        nodelist = parser.parse(('endllm',))
-        parser.delete_first_token()
-        return cls(nodelist, kwargs)
-
-    def render(self, context):
-        kwargs = self.resolve_kwargs(context)
-        prompt = self.render_content(context)
-
-        project = context.get('project')
-        view = context.get('view')
-        model = kwargs.get('model') if getattr(settings, 'LLM_VIEWS_SELECT_MODEL', False) else None
-        system_prompt = context.get('system_prompt', '')
-
-        if not project or kwargs.get('verbatim') == 'true':
-            return f'<pre>{prompt}</pre>'
-
-        project_id = project.id
-        snapshot_id = project.snapshot['id'] if project.snapshot else None
-        view_id = view['id']
-
-        if kwargs.get('type') == 'system':
-            context['system_prompt'] = system_prompt + prompt
-            return ''
-
-        task_func = 'rdmo_llm_views.tasks.invoke'
-        task_kwargs = {
-            'prompt': system_prompt + prompt,
-            'model': model,
-        }
-
-        task_name = get_hash(project_id, snapshot_id, view_id, **task_kwargs)
-        task_group = get_group(project_id, snapshot_id, view_id)
-
-        # check if a task with this name has already be computed
-        task = Task.objects.filter(name=task_name).first()
-
-        if task:
-            result_format = kwargs.get('format', 'markdown')
-
-            if kwargs.get('metadata') == 'true':
-                return adapter.render_metadata(task.result) + adapter.render_content(task.result, result_format)
-            else:
-                return adapter.render_content(task.result, result_format)
-
-        else:
-            # check if there is a queued task with that name
-            if task_name not in [queued_task.name() for queued_task in OrmQ.objects.all()]:
-                async_task(task_func, task_name=task_name, group=task_group, **task_kwargs)
-
-            return render_to_string(
-                'llm_views/tags/loading.html',
-                {
-                    'project_id': project_id,
-                    'snapshot_id': snapshot_id,
-                    'view_id': view_id,
-                    'timeout': settings.LLM_VIEWS_TIMEOUT,
-                },
-            )
-
-
-@register.tag()
+@register.tag('llm')
 def llm(parser, token):
-    return LLMNode.from_tag(parser, token)
+    return LLMNode.from_tag(parser, token, end_tag='endllm')
 
 
 @register.simple_tag(takes_context=True)
@@ -136,9 +48,12 @@ def render_current_language():
 
 @register.simple_tag(takes_context=True)
 def render_project_export(context, project=None):
-    if project is None:
-        project = context.get('project')
-    return get_project_export(project)
+    return RenderProjectExportNode.from_simple_tag(project=project).render(context)
+
+
+@register.tag('render_project_export_block')
+def render_project_export_block(parser, token):
+    return RenderProjectExportNode.from_tag(parser, token, end_tag='end_render_project_export_block')
 
 
 @register.simple_tag(takes_context=True)
