@@ -44,7 +44,16 @@ def get_project_export(project_wrapper, uris):
         export_plugin.project = project_wrapper._project
         export_plugin.snapshot = None
 
-        data += export_plugin.get_data()
+        export_plugin_data = export_plugin.get_data()
+
+        if uris:
+            questions = {
+                question.text for question in export_plugin.project.catalog.questions if question.attribute.uri in uris
+            }
+            export_plugin_data = [item for item in export_plugin_data if item['question'] in questions]
+
+        data += export_plugin_data
+
         return json.dumps(data, indent=2, ensure_ascii=False).replace(r'{', r'{{').replace(r'}', r'}}')
     else:
         return ''
