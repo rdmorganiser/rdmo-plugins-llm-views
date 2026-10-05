@@ -5,7 +5,9 @@ import time
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import escape
 
+import nh3
 from langchain_core.messages import message_to_dict
 from markdown import markdown
 
@@ -68,12 +70,14 @@ class LangChainAdapter:
 
     def render_content(self, result_dict, result_format):
         if isinstance(result_dict, dict):
+            result_text = result_dict['data'].get('text') or result_dict['data'].get('content')
+
             if result_format == 'markdown':
-                return markdown(result_dict['data']['content'])
+                return nh3.clean(markdown(result_text))
             elif result_format == 'pre':
-                return f'<pre>{result_dict["data"]["content"]}</pre>'
+                return f'<pre>{escape(result_text)}</pre>'
             else:
-                return result_dict['data']['content']
+                return escape(result_text)
         else:
             return render_to_string('llm_views/tags/error.html', {'result': result_dict})
 
