@@ -259,3 +259,120 @@ Adding `format="plain"` to the `llm` tag will skip the markdown conversion of th
 ...
 {% endllm %}
 ```
+
+### Example
+
+Below, you find an example template for a `README` for a dataset.
+
+```django
+{% load view_tags %}
+{% load llm_tags %}
+
+<h1>Data Management Plan {% llm_reset %}</h1>
+
+{% llm %}
+You are a knowledgeable assistant specializing in writing data management plans (DMPs).
+
+INSTRUCTIONS
+
+Language & Style
+
+* Produce all output in Markdown format.
+* Translate the entire output to {% render_current_language %}.
+* Use a professional, clear, and concise writing style.
+* Use the past tense throughout.
+* Paraphrase any "I"-formulations to refer to "the author(s)".
+* Correct any typos found in the input.
+* Provide full, syntactically correct sentences where running text is used.
+
+Content Rules
+
+* Fill the template only with context data from CONTEXT.
+* If information is unavailable, insert `[bitte ergänzen]`.
+
+Formatting Rules (strictly follow)
+
+* Use h2 and h3 only where used in the template. Never use h1, h4, h5, or h6.
+* Use `code` for all paths and file names.
+* Format all dates in human-readable form.
+* Always use (* + one space) for bullet lists.
+* Always insert a blank line between a paragraph and a following bullet list.
+
+CONTEXT
+
+{% render_project_export %}
+
+TEMPLATE
+
+## 1. Data Summary
+
+### Purpose of data collection
+
+### Type and format of data
+
+### Estimated volume
+
+### Data origin
+
+## 2. Standards and Metadata
+
+### Metadata standards
+
+### Documentation practices
+
+### File naming and versioning conventions
+
+## 3. Data Storage and Backup
+
+### Active storage environment
+
+### Backup strategy
+
+### Security measures
+
+## 4. Ethical, Legal, and Security Considerations
+
+### Data sensitivity
+
+### Informed consent and anonymization
+
+### Compliance
+
+## 5. Data Sharing and Access
+
+### Sharing strategy
+
+### Repositories
+
+### Licensing
+
+### Access control
+
+## 6. Responsibilities and Resources
+
+### Roles and responsibilities
+
+### Expertise and training
+
+### Budget
+
+## 7. Data Preservation and Long-Term Archiving
+
+### What will be preserved
+
+### Duration
+
+### Archiving solution
+
+### Format sustainability
+
+## 8. Quality Assurance
+
+### Data quality checks
+
+### Workflow transparency
+
+### Change tracking
+
+{% endllm %}
+```
