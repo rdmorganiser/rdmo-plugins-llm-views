@@ -37,10 +37,13 @@ dynamic = [
 ]
 dependencies = [
   "django-q2",
-  "langchain",
+  "langchain-core>=1.0",
 ]
 
 [project.optional-dependencies]
+all = [
+  "rdmo-plugins-llm-views[openai,ollama,anthropic,mistralai]"
+]
 openai = [
   "langchain-openai",
 ]
@@ -54,10 +57,10 @@ mistralai = [
   "langchain-mistralai"
 ]
 dev = [
-    "build",
-    "pre-commit",
-    "ruff",
-    "twine",
+  "build",
+  "pre-commit",
+  "ruff",
+  "twine",
 ]
 
 [project.urls]
