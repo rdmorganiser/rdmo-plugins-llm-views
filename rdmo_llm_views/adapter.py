@@ -33,6 +33,7 @@ class LangChainAdapter:
             end_perf = time.perf_counter()
 
             result_dict = message_to_dict(result)
+            result_dict['data']['text'] = str(result.text)
             result_dict['data']['time'] = {
                 'start_time': start_time.strftime('%Y-%m-%d %H:%M:%S'),
                 'end_time': end_time.strftime('%Y-%m-%d %H:%M:%S'),
