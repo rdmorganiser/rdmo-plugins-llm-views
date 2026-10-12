@@ -13,7 +13,7 @@ pip install git+https://github.com/rdmorganiser/rdmo-plugins-llm-views
 # alternatively, from a local copy
 git clone git@github.com:rdmorganiser/rdmo-plugins-llm-views
 pip install -e rdmo-plugins-llm-views[openai]
-pip install -e rdmo-plugins-llm-views[anthopic]   # alternatively
+pip install -e rdmo-plugins-llm-views[anthropic]  # alternatively
 pip install -e rdmo-plugins-llm-views[mistralai]  # alternatively
 pip install -e rdmo-plugins-llm-views[ollama]     # alternatively
 ```
@@ -48,11 +48,11 @@ LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OpenAILangChainAdapter'
 LLM_VIEWS_LLM_ARGS = {
     'api_key': CHATAI_API_KEY,
     'base_url': 'https://chat-ai.academiccloud.de/v1',
-    "model": 'meta-llama-31-8b-instruct'
+    "model": 'meta-llama-3.1-8b-instruct'
 }
 ```
 
-For `anthopic` use:
+For `anthropic` use:
 
 ```python
 LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.AnthropicLangChainAdapter'
@@ -110,7 +110,7 @@ Usage
 
 ### Development
 
-The djqngo-q worker needs to be started in parallel to the usual `runserver` command:
+The django-q worker needs to be started in parallel to the usual `runserver` command:
 
 ```bash
 python manage.py qcluster
@@ -118,7 +118,7 @@ python manage.py qcluster
 
 ### Production
 
-Create a Systed service file in `/etc/systemd/system/rdmo-qcluster.service`:
+Create a Systemd service file in `/etc/systemd/system/rdmo-qcluster.service`:
 
 ```
 [Unit]
@@ -145,7 +145,7 @@ WantedBy=multi-user.target
 Reload and enable the service:
 
 ```bash
-sys0temctl daemon-reload
+systemctl daemon-reload
 systemctl enable --now rdmo-qcluster
 ```
 
@@ -189,7 +189,7 @@ format tags can be used to render specific values into the prompt (similar to th
 * `format_set_value`
 * `format_set_value_list`
 
-The `{% format_current_language %}` can be used to access the current language (in RDMO) to use it in the instructions,
+The `{% render_current_language %}` can be used to access the current language (in RDMO) to use it in the instructions,
 e.g.:
 
 ```django
@@ -252,10 +252,10 @@ If you add `metadata="true"` to the `llm` tag, additional metadata information w
 {% endllm %}
 ```
 
-Adding `format="plain"` to the `llm` tag will skip the markdown convertsion of the response and display the plain text. Using `format="pre"` will wrap the plain text in `<pre>` tags for debugging:
+Adding `format="plain"` to the `llm` tag will skip the markdown conversion of the response and display the plain text. Using `format="pre"` will wrap the plain text in `<pre>` tags for debugging:
 
 ```django
-{% llm metadata="pre" %}
+{% llm format="pre" %}
 ...
 {% endllm %}
 ```
