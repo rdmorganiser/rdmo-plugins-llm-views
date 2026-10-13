@@ -1,0 +1,78 @@
+name: CI
+
+# Triggers: when this workflow runs
+on:
+  push:
+    branches:
+      - main          # run on pushes to main
+      - test          # run on pushes to test
+    tags:
+      - "*"           # run on any tag push (useful for releases)
+  pull_request:
+    branches:
+      - main          # run on PRs targeting main
+  workflow_dispatch:  # allow manual runs from the Actions tab
+
+# Cancel in-progress runs when a new commit is pushed to the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Start with zero permissions; grant per-job what's actually needed.
+permissions: {}
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  check:
+    name: Check with rdmo-app
+    runs-on: ubuntu-slim
+    steps:
+    - name: Checkout repo 🛎️
+      uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+
+    - name: Set up rdmo-app for testing
+      uses: rdmorganiser/actions/setup@main
+
+    - name: Install plugin
+      run: pip install -e .
+
+    - name: Configure plugin
+      working-directory: rdmo-app
+      run: |
+        cat >> config/settings/local.py <<'EOF'
+        INSTALLED_APPS = ['rdmo_llm_views', 'django_q', *INSTALLED_APPS]
+
+        LLM_VIEWS_ADAPTER = 'rdmo_llm_views.adapter.OpenAILangChainAdapter'
+        LLM_VIEWS_LLM_ARGS = {}
+
+        LLM_VIEWS_SELECT_MODEL = True
+        LLM_VIEWS_TIMEOUT = 4000
+
+        Q_CLUSTER = {
+            'name': 'DjangORM',
+            'workers': 1,
+            'timeout': 900,
+            'retry': 120,
+            'queue_limit': 1,
+            'bulk': 1,
+            'orm': 'default'
+        }
+        EOF
+
+    - name: Run migrations
+      working-directory: rdmo-app
+      run: ./manage.py migrate
+
+    - name: Run Django system checks
+      working-directory: rdmo-app
+      run: ./manage.py check
